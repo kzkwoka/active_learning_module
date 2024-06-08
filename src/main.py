@@ -23,10 +23,11 @@ learner = ActiveModule(estimator=KNeighborsClassifier,
 
 y, q_idx = None, None
 for i in range(14):
-    q_idx, _ = learner.step(y, q_idx, strategy=strategies.uncertainty_sampling, n_samples=10)
+    q_idx, _ = learner.step(y, q_idx, strategy=strategies.diversity_sampling, n_samples=10)
     y = y_raw[q_idx]
 
 metrics = learner.get_metric_history()
 
 metrics[["accuracy", "pr_auc", "roc_auc"]].plot()
-plt.show()
+plt.savefig("kiniaaa.png")
+print('hi')

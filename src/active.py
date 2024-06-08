@@ -120,7 +120,7 @@ class ActiveModule:
 
         n_samples = n_samples if n_samples else int(0.1 * len(self.X))
         if self._fitted:
-            return self.strategy(self.estimator, self.X, n_samples, omit_idx=self.label_idx)
+            return strategy(self.estimator, self.X, n_samples, omit_idx=self.label_idx)
         else:
             warn(f"`estimator` has not been fitted yet. Providing random samples instead.")
             return random_sampling(self.X, n_samples, omit_idx=self.label_idx)
