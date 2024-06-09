@@ -17,11 +17,14 @@ def smooth(scalars, weight):  # Weight between 0 and 1
 
 def run_experiments(learner, y_train, strategies, n_samples, n_iter):
     metrics = {}
+    info = []
     for strategy in tqdm(strategies):
         l = deepcopy(learner)
         _y, q_idx = None, None
-        for _ in tqdm(range(n_iter)):
+        for _ in (t := tqdm(range(n_iter))):
             q_idx, _ = l.step(_y, q_idx, strategy=strategy, n_samples=n_samples)
             _y = y_train.values[q_idx]
+        avg_loop_time = t.format_dict['elapsed'] / t.format_dict['total']
+        info.append(f"One training loop with {strategy.__name__} takes approx. {round(avg_loop_time, 2)}s")
         metrics[strategy.__name__] = l.get_metric_history()
-    return pd.concat(metrics, names=['strategy'])
+    return pd.concat(metrics, names=['strategy']), info
