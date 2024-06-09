@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, recall_score, f1_score, average_precision_score
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import confusion_matrix
+from sklearn.preprocessing import LabelBinarizer
 
 try:
     from .strategies import uncertainty_sampling, random_sampling
@@ -74,16 +75,19 @@ class ActiveModule:
         else:
             warn(f"`y` should have length {len(label_idx)}, but got {len(y_initial)}. Labels omitted.")
 
+        self.mapping = LabelBinarizer()
         if X_valid is not None and y_valid is not None:
             self.X_valid = X_valid
             self.y_valid = y_valid
 
             self._metrics = np.array([], dtype=dict)
 
-            self.classes = np.unique(np.concatenate([self.y_train.flatten(), self.y_valid.flatten()]))
+            # self.classes = np.unique(np.concatenate([self.y_train.flatten(), self.y_valid.flatten()]))
+            self.mapping.fit(np.concatenate([self.y_train.flatten(), self.y_valid.flatten()]))
         else:
-            self.classes = np.unique(self.y_train)
-        self.mapping = {label: idx for idx, label in enumerate(self.classes)}
+            # self.classes = np.unique(self.y_train)
+            self.mapping.fit(self.y_train)
+        # self.mapping = {label: idx for idx, label in enumerate(self.classes)}
 
         self._fitted = False
 
@@ -120,7 +124,7 @@ class ActiveModule:
 
         n_samples = n_samples if n_samples else int(0.1 * len(self.X))
         if self._fitted:
-            return self.strategy(self.estimator, self.X, n_samples, omit_idx=self.label_idx)
+            return strategy(self.estimator, self.X, n_samples, omit_idx=self.label_idx)
         else:
             warn(f"`estimator` has not been fitted yet. Providing random samples instead.")
             return random_sampling(self.X, n_samples, omit_idx=self.label_idx)
@@ -136,9 +140,7 @@ class ActiveModule:
 
     def get_metrics(self, X, y) -> dict:
         y_pred = self.estimator.predict(X)
-        y_mapped = np.array([self.mapping[label] for label in y.flatten()])
-        y_pred_mapped = np.array([self.mapping[label] for label in y_pred.flatten().astype(int)])
-        matrix, matrix_pred = _get_pred_matrix(y_mapped, y_pred_mapped, len(self.classes))
+        matrix, matrix_pred = self.mapping.transform(y), self.mapping.transform(y_pred)
         return {
             'default_metric': self.score(X, y),
             'accuracy': accuracy_score(y, y_pred),
