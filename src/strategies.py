@@ -65,6 +65,7 @@ def kmeans_plus_plus_sampling(estimator, X, n, omit_idx=None):
 
 
 def random_sampling(estimator, X, n, omit_idx=None):
+    np.random.seed(42)
     valid_indices, _ = get_valid_idx(len(X), omit_idx)
     n = min(len(valid_indices), n)
     idx = np.random.choice(valid_indices, n, replace=False)
